@@ -512,7 +512,7 @@ bool IDList::getList(bool plusOne) {
 	}																							//
 	if (resizeBuff(allocate,(void**)&IDBuff)) {									// Resize the IDBuff to the allocation byes value.
 		rootID = ourBlockFile->readRootBlockID();									// Grab root ID.
-		success = ourBlockFile->getBlock(rootID,(char*)IDBuff,numBytes);	// Have a go at grabbing the buffer.
+		success = ourBlockFile->getBlock(rootID,(uint8_t*)IDBuff,numBytes);	// Have a go at grabbing the buffer.
 		success = success || plusOne;													// If first one? Then it's ok.
 		if (!success) {																	//	If we failed..
 			resizeBuff(0,(void**)&IDBuff);											// Recycle the buffer we allocated.
@@ -544,7 +544,7 @@ unsigned long IDList::addItem(void) {
 		IDBuff[numItems] = newID;														// Poke the new ID into the end.
 		numItems++;																			// Bump up the number of items.
 		numBytes = numItems * sizeof(unsigned long);								// Update the numbBytes value.
-		if (ourBlockFile->writeBlock(rootID,(char*)IDBuff,numBytes)) {		// If we can updating the file.
+		if (ourBlockFile->writeBlock(rootID,(uint8_t*)IDBuff,numBytes)) {		// If we can updating the file.
 			result = newID;																// Everything worked? Set result.
 		}																						//
 		resizeBuff(0,(void**)&IDBuff);												// Recycle the buffer we allocated.
@@ -578,7 +578,7 @@ bool IDList::removeItem(unsigned long oldID) {
 			if (foundIt) {																// If we found it..
 				rootID = ourBlockFile->readRootBlockID();						// Grab root ID.
 				numBytes = (numItems-1) * sizeof(unsigned long);			// Update the numbBytes value.
-				ourBlockFile->writeBlock(rootID,(char*)IDBuff,numBytes);	// Stuff back the buffer.
+				ourBlockFile->writeBlock(rootID,(uint8_t*)IDBuff,numBytes);	// Stuff back the buffer.
 			}																				// pop
 		}																					// pop
 	}																						// pop
@@ -642,7 +642,7 @@ void itemMgr::addNewItem(const char* name) {
 			newItem.state = listed;																	// We actually control that.
 			newID = addItem();																		// Add item to root list.
 			if (newID) {																				// Non zero ID means success.
-				if (ourBlockFile->writeBlock(newID,(char*)&newItem,sizeof(item))) {	// Save the result.
+				if (ourBlockFile->writeBlock(newID,(uint8_t*)&newItem,sizeof(item))) {	// Save the result.
 					newItemView = new itemView(newID,&newItem);								// Create the new item.
 					if (newItemView) {																// Got one?
 						newItemView->addToList();													// Tell it to go add itself to a list.
@@ -682,7 +682,7 @@ void itemMgr::clearCart(void) { cList->clearCart(); }
 bool itemMgr::readItem(unsigned long itemID,item* anItem) {
 
 	if (anItem) {					// Behave, no writing to NULL.
-		return ourBlockFile->getBlock(itemID,(char*)anItem,sizeof(item));
+		return ourBlockFile->getBlock(itemID,(uint8_t*)anItem,sizeof(item));
 	}
 	return false;
 }
@@ -690,7 +690,7 @@ bool itemMgr::readItem(unsigned long itemID,item* anItem) {
 				
 void itemMgr::saveItem(unsigned long itemID,item* anItem) {
 
-	ourBlockFile->writeBlock(itemID,(char*)(anItem),sizeof(item));
+	ourBlockFile->writeBlock(itemID,(uint8_t*)(anItem),sizeof(item));
 }
 
 
