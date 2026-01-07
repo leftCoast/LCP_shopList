@@ -2,13 +2,458 @@
 #include <shopList.h>
 
 
-// Colors & fonts.. CHANGE TO PALLETTE CLASS
 
-colorObj SLBackColor;
-colorObj	SLDefTextColor;
-colorObj	SLEditTextColor;
-colorObj	focusBack(LC_CHARCOAL);
 
+// **********************************************************************
+// pallete - Colors for this and that.
+// **********************************************************************
+
+
+pallete::pallete(void) { setupColors(); }
+
+
+pallete::~pallete(void) {  }
+	
+void pallete::setupColors(void) {
+	
+	dispBackColor.setColor(&black);
+	focusBackColor.setColor(LC_CHARCOAL);
+	outlineColor.setColor(&white);
+	listTextColor.setColor(&yellow);
+	strikeTextColor.setColor(&yellow);
+	strikeTextColor.blend(&white,25);
+	strikeTextColor.blend(&black,50);
+	editTextColor.setColor(&black);
+	labelTextColor.setColor(&white);
+}
+
+
+pallete* colors = NULL;
+
+
+
+// **********************************************************************
+// STLabel - Adafruit text than can have a strike through line added.
+// **********************************************************************
+
+
+				
+STLabel::STLabel(rect* inRect,const char* inText,int textSize)
+	: label(inRect->x,inRect->y,inRect->width,inRect->height,inText,textSize) {
+
+	strike = false;			// Off to start with.
+	setStrikeColor(&red);	// Good default.
+	txtX = 0;
+	txtY = 0;
+	textWidth = 0;
+}
+
+
+STLabel::STLabel(int inLocX, int inLocY, int inWidth,int inHeight,const char* inText,int textSize)
+	: label(inLocX,inLocY,inWidth,inHeight,inText,textSize) {
+	
+	strike = false;			// Off to start with.
+	setStrikeColor(&red);	// Good default.
+	txtX = 0;
+	txtY = 0;
+	textWidth = 0;
+}
+
+
+STLabel::~STLabel(void) {  }
+
+	
+void STLabel::setStrikeColor(colorObj* aColor) {
+
+	strikeColor.setColor(aColor);
+	setNeedRefresh();
+}
+
+
+void STLabel::setStrike(bool onOff) {
+
+	strike = onOff;
+	setNeedRefresh();
+}
+
+
+// Call right as your going to print the text out.
+void  STLabel::calcStrike(void) {
+
+	if (strike) {
+		txtX = screen->getCursorX()+x;	
+		txtY = screen->getCursorY()+ y + (CHAR_HEIGHT * textSize)/2;
+		textWidth = getTextWidth();			// Calculate how wide the line may be.
+		if (width<textWidth) {
+			textWidth = width;
+		}
+	}
+}
+
+
+// Call right after.	
+void STLabel::doStrike(void) {
+
+	if (strike) {
+		screen->drawHLine(txtX,txtY,textWidth,&strikeColor);
+	}
+}
+
+
+void STLabel::drawSelf(void) {
+
+	int	charDif; 
+   int	numCharsDisp;
+	char*	temp;
+	
+	if (!strike) {																		// If we don't want the strike through..
+		label::drawSelf();															// Just let them do it.
+		return;																			// And bolt!
+	}																						// really bad design. Tn hurry.
+	if (buff) {																			// Sanity. If we have anything to display..
+		temp = NULL;
+		numCharsDisp = getViewChars();											// Save off how many chars we can display.
+		if (transp) {																	// If we don't draw background bits..
+			screen->setTextColor(&textColor);									// We just set the one color as a flag for this.
+		} else {																			// Else, we DO want to draw the background bits.
+			screen->setTextColor(&textColor,&backColor);						// We set BOTH colors as a flag for both.
+		}
+		screen->setTextSize(textSize);											// Set the text size.
+		screen->setTextWrap(false);												// Turn off wrap. It just makes a mess of everything.
+		screen->setCursor(x,y);														// Move the cursor to our XY location.
+		charDif =  numCharsDisp - strlen(buff);								// Calculate the total amount of blanks we'll need.
+		if (charDif==0) {																// If its a perfect fit..
+			calcStrike();
+			screen->drawText(buff);													// Just draw it out. EASY PEASY! (And we're done)
+			doStrike();
+		} else if (charDif>0) {														// Else, we'll need some padding..
+			textWidth = getTextWidth();
+			switch (justify) {														// Left, Right, Center will be handled differently.
+				case TEXT_LEFT :														// ** LEFT **
+					calcStrike();
+					screen->drawText(buff);											// Draw the text.
+					doStrike();
+					for(int i=1;i<=charDif;i++) screen->drawText(" ");		// Add the padding.
+				  break;																	// And that's it.
+				case TEXT_RIGHT :														// ** RIGHT **
+				  for(int i=1;i<=charDif;i++) screen->drawText(" ");		// First we add the padding.
+				  calcStrike();
+				  screen->drawText(buff);											// Then draw the text.
+				  doStrike();
+				  break;																	// And we're done.
+				case TEXT_CENTER :													// ** CENTER **
+					int leadSp = charDif/2;											// Do integer divide by 2 for the lead blank count.
+					int trailSp = charDif-leadSp;									// Subtract the lead count from the blank count for the trailing count.
+				  for(int i=1;i<=leadSp;i++) screen->drawText(" ");		// Add the lead padding.
+				  calcStrike();
+				  screen->drawText(buff);											// Draw the string.
+				  doStrike();
+				  for(int i=1;i<=trailSp;i++) screen->drawText(" ");		// Add the trailing padding.
+				  break;																	// And again, we're done.
+				}
+		} else {                      											// Else the string needs truncation..
+			if (numCharsDisp<(TEMP_BUFF_SIZE-1)) {								// Make sure we have enough room to maneuver.
+				textWidth = width;
+				if (resizeBuff(TEMP_BUFF_SIZE,&temp)) {
+					calcStrike();
+					switch (justify) {													// Left, Right, Center will be handled differently.
+						case TEXT_LEFT :													// ** LEFT **
+							temp[0] = '\0';												// Clear the temp buffer.
+							strncat(temp,buff,numCharsDisp);							// Stamp in the characters to display.
+							screen->drawText(temp);										// Draw the string.
+						break;																// And we're done.
+						case TEXT_RIGHT :													// ** RIGHT**						
+							screen->drawText((char*)&(buff[-charDif])); 			// Just draw the text starting after the clipped portion.
+						break;
+						case TEXT_CENTER :												// ** CENTER **
+							int firstChar = -charDif/2;								// Calculate first char to display.
+							temp[0] = '\0';												// "Clear" the temp buffer.
+							strncat(temp,&buff[firstChar],numCharsDisp);			// Stamp in the characters to display.
+							screen->drawText(temp);										// Draw the string.
+						break;																// And we're done.
+					}
+					doStrike();
+					resizeBuff(0,&temp);
+				}
+			} else {
+				screen->drawText("Overflow");										// Our temp buffer is just too small!
+			}
+		}
+	}
+}
+
+
+
+// **********************************************************************
+// itemView - The actual item that the user sees with controls on it.
+// **********************************************************************
+	
+	
+// Give us an item and an ID to store it to? We're good.
+itemView::itemView(unsigned long itemID,item* anItem)
+	: drawGroup(0,0,LIST_W,ITEM_H) {
+	
+	if (itemID && anItem) {				// Sanity. Valid inputs?
+		ourItemID = itemID;				// Copy the ID.
+		ourItem = *anItem;				// Copy the item info.
+		setupView();						//	Call setup to build our draw group.
+		setEventSet(touchNDrag);		// We want the fancy event set.
+		scrolling = false;				// Ain't scrolling yet.
+	}											//
+}
+	
+
+// We should always be current in the file, so, nothing to do here.
+itemView::~itemView(void) {  }
+
+
+void itemView::setupView(void) {
+	
+	if (ourItem.version) {																			// Sanity. Non zero
+		name = new STLabel(IV_NAME_X,IV_NAME_Y,IV_NAME_W,IV_NAME_H,ourItem.itemName);
+		name->setColors(&colors->listTextColor);
+		name->setTextSize(1);
+		name->setJustify(TEXT_LEFT);
+		addObj(name);
+	}
+}
+	
+
+void itemView::doAction(event* inEvent,point* localPt) {
+
+	dragType	dragDir;
+	point		listPt;
+	
+	if (inEvent->mType==touchEvent) {
+		if (haveFocus()) {
+			setFocusPtr(NULL);
+		} else {
+			setFocusPtr(this);
+		}
+	} else if (inEvent->mType==dragBegin) {
+		dragDir = dDirection(inEvent->mAngle,DRAG_TOL);
+		if (dragDir==dragUp||dragDir==dragDn) {
+			scrolling = true;
+			listPt.x = localPt->x - x;
+			listPt.y = localPt->y - y;
+			calcualteOurList()->doAction(inEvent,&listPt);
+		}
+	}  else if (inEvent->mType==dragOn) {							// Or else, we're actually dragging..
+		if (scrolling) {
+			listPt.x = localPt->x - x;
+			listPt.y = localPt->y - y;
+			calcualteOurList()->doAction(inEvent,&listPt);
+		}
+	} else if (inEvent->mType==liftEvent) {							// Or else, we're finished dragging..
+	 	if (scrolling) {
+	 		listPt.x = localPt->x - x;
+			listPt.y = localPt->y - y;
+			calcualteOurList()->doAction(inEvent,&listPt);
+			scrolling = false;
+		} else {
+			dragDir = dDirection(inEvent->mAngle,DRAG_TOL);
+			if (inEvent->mDist>20) {
+				if (dragDir==dragRight) {
+					changeState(listed);
+				} else if (dragDir==dragLeft) {
+					changeState(suggested);
+				}
+			} else if (ourState()==listed) {
+				changeState(grabbed);
+			}  else if (ourState()==grabbed) {
+				changeState(listed);
+			}
+		}
+	}
+} 	
+
+
+// This is called when OUR focus changes. Usually used to cause a redraw to show the
+// change.
+void  itemView::setThisFocus(bool setLoose) {
+	
+	shopList*	ourApp;
+	
+	ourApp = (shopList*)ourPanel;
+	drawObj::setThisFocus(setLoose);	// Do the normal stuff.. ('Causes subsequent redraw)
+	if (setLoose) {
+		ourApp->selected(this);
+	} else {
+		ourApp->selected(NULL);
+	}
+}
+
+
+// Call this to change our item's name.
+void itemView::setItemName(const char* aName) {
+	
+	strncpy(ourItem.itemName,aName,MAX_NAME_BYTES);
+	ourItem.itemName[MAX_NAME_BYTES-1] = '\0';
+	name->setValue(ourItem.itemName);
+	setNeedRefresh();
+}
+
+
+// Call this to read out our item's name.
+char* itemView::getItemName(void) { return ourItem.itemName; }
+
+
+// This looks at the state value and from that, calculates where we "should" be.
+scrollingList* itemView::calcualteOurList(void) {
+	
+	shopList*	ourApp;
+	
+	ourApp = (shopList*)ourPanel;
+	if (ourState()==suggested) {
+		return ourApp->ourItemList;
+	}
+	return ourApp->ourCartList;
+}
+
+
+// Mostly a typing aid. Also, now you don't need remember where to look it up anymore.
+itemStates itemView::ourState(void) { return ourItem.state; }
+
+	
+// We change state value here and this'll move us to the correct list once changed.
+void itemView::changeState(itemStates newState) {
+		
+	shopList*	ourApp;
+	
+	ourItem.state = newState;
+	setFocusPtr(NULL);
+	addToList();
+	ourApp = (shopList*)ourPanel;
+	ourApp->ourItemMgr->saveItem(ourItemID,&ourItem);
+}
+	
+
+// This will add us to the correct list according to our state value.
+void itemView::addToList(void) {
+	
+	shopList*	ourApp;
+	
+	ourApp = (shopList*)ourPanel;
+	unhook();
+	switch(ourState()) {
+		case suggested :
+			name->setColors(&colors->listTextColor);
+			name->setStrike(false);
+			ourApp->ourItemList->addObj(this);
+		break;
+		case listed :
+			name->setColors(&colors->listTextColor);
+			name->setStrike(false);
+			ourApp->ourCartList->addViewObj(this);
+		break;
+		case grabbed :
+			name->setColors(&colors->strikeTextColor);
+			name->setStrike(true);
+			ourApp->ourCartList->addViewObj(this);
+		break;
+	}
+	ourApp->ourItemList->setPositions();
+	ourApp->ourItemList->setNeedRefresh();
+	ourApp->ourCartList->setPositions();
+	ourApp->ourCartList->setNeedRefresh();
+}
+
+
+// We don't want to draw stuff where it ain't wanted.
+void itemView::itemView::draw(void) {
+
+	if (calcualteOurList()->isVisible(this)) {
+		drawGroup::draw();
+	}
+	needRefresh = false;					  // But in all cases. We no longer need to be drawn.		
+}
+
+
+void itemView::drawSelf(void) {
+
+	rect			aFrame(this);
+	
+	aFrame.insetRect(1);
+	if (haveFocus()) {
+		screen->fillRect(&aFrame,&colors->focusBackColor);
+	} else {
+		screen->fillRect(&aFrame,&colors->dispBackColor);
+	}
+}
+
+
+// **********************************************************************
+// itemList
+// **********************************************************************
+
+
+itemList::itemList(rect* frame)
+	: scrollingList(frame->x,frame->y,frame->width,frame->height,touchScroll,dragEvents) {  }
+
+	
+itemList::~itemList(void) {  }
+
+
+void itemList::drawSelf(void) {
+
+	screen->fillRect(this,&colors->dispBackColor);
+	//screen->drawRect(this,&colors->outlineColor);
+}
+
+
+
+// **********************************************************************
+// cartList
+// **********************************************************************
+
+
+cartList::cartList(rect* frame)
+	: scrollingList(frame->x,frame->y,frame->width,frame->height,touchScroll,dragEvents) {  }
+
+
+cartList::~cartList(void) {  }
+
+
+// Basically a copy of the draw list one but only accepts itemView pointers.
+void cartList::addViewObj(itemView* newObj) {
+
+	if (mVertical) {
+		itemHeight = max(itemHeight,newObj->height);
+		newObj->setLocation(0,numObjects()*itemHeight);
+	} else {
+		itemWidth = max(itemWidth,newObj->width);
+		newObj->setLocation(numObjects()*itemWidth,0);
+	}
+	if (newObj->ourState()==grabbed) {
+		newObj->dblLinkListObj::linkToEnd(&listHeader);		// Put the new guy at the BOTTOM of the list.				
+	} else {																// Else just listed?
+		newObj->dblLinkListObj::linkAfter(&listHeader);   	// Put the new guy at the top of the list.
+	}
+	needRefresh = true;
+}
+
+	
+void cartList::clearCart(void) {
+
+	itemView*	aView;
+	
+	do {
+		aView = (itemView*)getObj(0);
+		if (aView) {
+			aView->changeState(suggested);
+		}
+	} while(aView);
+	setNeedRefresh();
+}
+
+
+void cartList::drawSelf(void) {
+
+	screen->fillRect(this,&colors->dispBackColor);
+	//screen->drawRect(this,&colors->outlineColor);
+}
+
+	
 // **********************************************************************
 // IDList
 // **********************************************************************
@@ -249,209 +694,15 @@ void itemMgr::saveItem(unsigned long itemID,item* anItem) {
 }
 
 
-// **********************************************************************
-// itemView - The actual item that the user sees with controls on it.
-// **********************************************************************
-	
-	
-// Give us an item and an ID to store it to? We're good.
-itemView::itemView(unsigned long itemID,item* anItem)
-	: drawGroup(0,0,LIST_W,ITEM_H) {
-	
-	if (itemID && anItem) {			// Sanity. Valid inputs?
-		ourItemID = itemID;			// Copy the ID.
-		ourItem = *anItem;			// Copy the item info.
-		setupView();					//	Call setup to build our draw group.
-		setEventSet(touchNDrag);	// We want the fancy event set.
-	}										//
-}
-	
+void itemMgr::saveSelected(itemView* selected) {
 
-// We should always be current in the file, so, nothing to do here.
-itemView::~itemView(void) {  }
-
-
-void itemView::setupView(void) {
-	
-	if (ourItem.version) {																			// Sanity. Non zero
-		name = new label(IV_NAME_X,IV_NAME_Y,IV_NAME_W,IV_NAME_H,ourItem.itemName);
-		name->setColors(&yellow);
-		name->setTextSize(1);
-		addObj(name);
+	if (selected) {
+		saveItem(selected->ourItemID,&(selected->ourItem));
 	}
 }
-
-
-void itemView::doAction(event* inEvent,point* localPt) {
-
-	float	angle;
-	
-	if (inEvent->mType==touchEvent) {
-		if (haveFocus()) {
-			setFocusPtr(NULL);
-		} else {
-			setFocusPtr(this);
-		}
-	} else if (inEvent->mType==liftEvent) {
-		if (inEvent->mDist>20) {
-			angle = inEvent->mAngle;
-			if (angle > -1 && angle < 1) {
-				changeState(listed);
-			} else if (angle > M_PI-1 && angle < M_PI+1) {
-				changeState(suggested);
-			}
-		}
-	}
-}
-
-
-void  itemView::setThisFocus(bool setLoose) {
-	
-	shopList*	ourApp;
-	
-	ourApp = (shopList*)ourPanel;
-	drawObj::setThisFocus(setLoose);	// Do the normal stuff..
-	if (setLoose) {
-		ourApp->selected(this);
-	} else {
-		ourApp->selected(NULL);
-	}
-}
-
-
-// This looks at the state value and from that calculates where we "should" be.
-drawList* itemView::calcualteOurList(void) {
-
-	shopList*	ourApp;
-	
-	ourApp = (shopList*)ourPanel;
-	if (ourItem.state==suggested) {
-		return ourApp->ourItemList;
-	}
-	return ourApp->ourCartList;
-}
-
-	
-// We change state value here and this'll move us to the correct list once changed.
-void itemView::changeState(itemStates newState) {
-	
-	shopList*	ourApp;
-	
-	ourApp = (shopList*)ourPanel;
-	ourItem.state = newState;
-	ourApp->ourItemMgr->saveItem(ourItemID,&ourItem);
-	addToList();
-	setFocusPtr(NULL);
-}
-	
-
-// This will add us to the correct list according to our state value.
-void itemView::addToList(void) {
-
-	shopList*	ourApp;
-	
-	ourApp = (shopList*)ourPanel;
-	unhook();
-	calcualteOurList()->addObj(this);
-	ourApp->ourItemList->setPositions();
-	ourApp->ourItemList->setNeedRefresh();
-	ourApp->ourCartList->setPositions();
-	ourApp->ourCartList->setNeedRefresh();
-}
-
-
-// We don't want to draw stuff where it ain't wanted.
-void itemView::itemView::draw(void) {
-
-	if (calcualteOurList()->isVisible(this)) {
-		drawGroup::draw();
-	}
-}
-
-
-void itemView::drawSelf(void) {
-
-	rect			aFrame(this);
-	
-	aFrame.insetRect(1);
-	if (haveFocus()) {
-		screen->fillRect(&aFrame,&focusBack);
-	} else {
-		screen->fillRect(&aFrame,&black);
-	}
-}
-
-
-// **********************************************************************
-// itemList
-// **********************************************************************
-
-
-itemList::itemList(rect* frame)
-	: drawList(frame) {  }
-
-	
-itemList::~itemList(void) {  }
-
-
-void itemList::drawSelf(void) {
-
-	screen->fillRect(this,&black);
-	screen->drawRect(this,&white);
-}
+		
 
 
 
-// **********************************************************************
-// cartList
-// **********************************************************************
 
 
-cartList::cartList(rect* frame)
-	: drawList(frame) {  }
-
-
-cartList::~cartList(void) {  }
-
-
-void  cartList::clearCart(void) {
-
-	itemView*	aView;
-	
-	do {
-		aView = (itemView*)getObj(0);
-		if (aView) {
-			aView->changeState(suggested);
-		}
-	} while(aView);
-	setNeedRefresh();
-}
-
-
-void cartList::drawSelf(void) {
-
-	screen->fillRect(this,&black);
-	screen->drawRect(this,&white);
-}
-
-
-/*
-void showItem(item* anItem) {
-
-	Serial.println("********* item *********");
-	Serial.print("Item name :\t");
-	Serial.println(anItem->itemName);
-	Serial.print("Version num :\t");
-	Serial.println(anItem->version);
-	Serial.print("Times listed :\t");
-	Serial.println(anItem->timesListed);
-	Serial.print("Item state :\t");
-	switch(anItem->state) {
-		case suggested	: Serial.println("Sugested");	break;
-		case listed		: Serial.println("listed");	break;
-		case grabbed	: Serial.println("In cart");	break;
-	}
-	Serial.println("************************");
-	Serial.println();
-};
-*/	

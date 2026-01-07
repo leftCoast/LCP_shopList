@@ -2,36 +2,34 @@
 #define shopListItems_h
 
 
-
 #include <blockFile.h>
 #include <drawObj.h>
 #include <iconButton.h>
 #include <label.h>
-
-
+#include <scrollingList.h>
 
 // **********************************************************************
 // Definitions.
 // **********************************************************************
 
-#define LIST_W			90
+#define LIST_W			110	//90
 #define ITEM_H			20
 #define NUM_ITEMS		12
 
-#define ITEMS_X		10
+#define ITEMS_X		0	//10
 #define ITEMS_Y		ITEM_LBL_Y + 25
 #define ITEMS_W		LIST_W				// See shopListItems.h
 #define ITEMS_H		ITEM_H * NUM_ITEMS
 
-#define CART_X			CART_LBL_X - 20
+#define CART_X			CART_LBL_X - 30  //20
 #define CART_Y			ITEMS_Y
 #define CART_W			ITEMS_W
 #define CART_H			ITEMS_H
 
-#define IV_NAME_X		10
+#define IV_NAME_X		5
 #define IV_NAME_Y		6
-#define IV_NAME_W		80
-#define IV_NAME_H		20
+#define IV_NAME_W		100
+#define IV_NAME_H		12
 
 #define ITEM_VERSION		1;
 #define MAX_NAME_BYTES	40						
@@ -51,9 +49,56 @@ struct item {
 };
 
 
-extern colorObj	SLBackColor;
-extern colorObj	SLDefTextColor;
-extern colorObj	SLEditTextColor;
+// **********************************************************************
+// pallete - Colors for this and that.
+// **********************************************************************
+
+class pallete {
+
+	public:
+				pallete(void);
+	virtual	~pallete(void);
+	
+	virtual	void		setupColors(void);
+	
+				colorObj	dispBackColor;
+				colorObj	focusBackColor;
+				colorObj	outlineColor;
+				colorObj	listTextColor;
+				colorObj	strikeTextColor;
+				colorObj	labelTextColor;
+				colorObj	editTextColor;
+					
+};
+
+
+extern pallete* colors;
+
+// **********************************************************************
+// STLabel - Adafruit text than can have a strike through line added.
+// **********************************************************************
+
+
+class STLabel :	public label {
+						
+	public:				
+				STLabel(rect* inRect,const char* inText,int textSize=1);
+				STLabel(int inLocX, int inLocY, int inWidth,int inHeight,const char* inText,int textSize=1);
+	virtual	~STLabel(void);
+	
+				void	setStrikeColor(colorObj* aColor);
+				void	setStrike(bool onOff);
+				void  calcStrike(void);
+				void	doStrike(void);
+	virtual	void	drawSelf(void);
+	
+				bool		strike;
+				colorObj	strikeColor;
+				int		txtX;
+				int		txtY;
+				int		textWidth;
+};
+
 
 
 // **********************************************************************
@@ -67,19 +112,23 @@ class itemView :	public drawGroup {
 				itemView(unsigned long itemID,item* anItem);
 	virtual	~itemView(void);
 	
-				void			setupView(void);
-	virtual	void			doAction(event* inEvent,point* localPt);
-	virtual	void			setThisFocus(bool setLoose);
-				void			handleDrag(float angle);
-				drawList*	calcualteOurList(void);
-				void			changeState(itemStates newState);
-				void			addToList(void);
-	virtual	void			draw(void);
-	virtual	void			drawSelf(void);
+				void				setupView(void);
+	virtual	void				doAction(event* inEvent,point* localPt);
+	virtual	void				setThisFocus(bool setLoose);
+				void				setItemName(const char* aName);
+				char*				getItemName(void);
+				void				handleDrag(float angle);
+				scrollingList*	calcualteOurList(void);
+				itemStates		ourState(void);
+				void				changeState(itemStates newState);
+				void				addToList(void);
+	virtual	void				draw(void);
+	virtual	void				drawSelf(void);
 					
-					unsigned long	ourItemID;
-					item				ourItem;
-					label*			name;
+				unsigned long	ourItemID;
+				item				ourItem;
+				STLabel*			name;
+				bool				scrolling;
 };
 
 
@@ -88,7 +137,7 @@ class itemView :	public drawGroup {
 // **********************************************************************
 
 
-class itemList : public drawList {
+class itemList : public scrollingList {
 
 	public:
 				itemList(rect* frame);
@@ -105,12 +154,13 @@ class itemList : public drawList {
 // **********************************************************************
 
 
-class cartList : public drawList {
+class cartList : public scrollingList {
 
 	public:
 				cartList(rect* frame);
 	virtual	~cartList(void);
-				
+	
+	virtual	void	addViewObj(itemView* newObj);
 				void	clearCart(void);
 	virtual	void	drawSelf(void);
 
@@ -156,6 +206,7 @@ class itemMgr :	public IDList {
 				void	deleteItem(itemView* oldView);
 				void	clearCart(void);
 				void	saveItem(unsigned long itemID,item* anItem);
+				void	saveSelected(itemView* selected);
 				
 	protected:
 				bool	readItem(unsigned long itemID,item* anItem);

@@ -16,6 +16,9 @@
 #define NEW_X			49
 #define NEW_Y			0
 
+#define EDIT_X			109
+#define EDIT_Y			0
+
 #define DELETE_X		169
 #define DELETE_Y		NEW_Y
 
@@ -29,7 +32,7 @@
 #define DELETE_LBL_W	NEW_LBL_W
 #define DELETE_LBL_H	NEW_LBL_H
 
-#define CLEAR_X		120-11
+#define CLEAR_X		EDIT_X
 #define CLEAR_Y		ITEM_LBL_Y
 
 
@@ -67,14 +70,19 @@ void clearCartBtn::doAction(void) {
 shopList::shopList(int newAppID)
   : panel(newAppID) {
   	
-	ourAddItemDBox	= NULL;
-	ourBlockFile	= NULL;
-	ourItemMgr		= NULL;
-	selectedView	= NULL;
-	if (setFilePath("itemFile")) {						// This name in our folder.
-		ourBlockFile = new blockFile(mFilePath);		// Have a go at creating the block file.
-		if (ourBlockFile) {									// Got the block file?
-			ourItemMgr = new itemMgr(ourBlockFile);	// Create the item manager.
+	ourAddItemDBox		= NULL;
+	ourEditItemDBox	= NULL;
+	ourBlockFile		= NULL;
+	ourItemMgr			= NULL;
+	selectedView		= NULL;
+	colors 				= new pallete();
+	numObj				= -1;
+	if (colors) {
+		if (setFilePath("itemFile")) {						// This name in our folder.
+			ourBlockFile = new blockFile(mFilePath);		// Have a go at creating the block file.
+			if (ourBlockFile) {									// Got the block file?
+				ourItemMgr = new itemMgr(ourBlockFile);	// Create the item manager.
+			}
 		}
 	}
 }
@@ -87,28 +95,18 @@ shopList::~shopList(void) {
 
 	if (ourBlockFile) delete(ourBlockFile);
 	if (ourItemMgr) delete(ourItemMgr);
-}
-
-
-void shopList::setupColors(void) {
-
-	SLBackColor.setColor(&black);
-	SLDefTextColor.setColor(&cyan);
-	SLEditTextColor.setColor(&yellow);
+	if (colors) delete(colors);
 }
 
 
 // setup() & loop() panel style.
 void shopList::setup(void) {
 
-	//filePath		aPath;
 	rect			aFrame;
-	tempStr		pathStr;
 	bmpObj*		aBmp;
-	label*		aLabel;
 	
+	colors = new pallete();
 	
-	setupColors();
 	aFrame.setRect(ITEM_LBL_X,ITEM_LBL_Y,ITEM_LBL_W,ITEM_LBL_H);
 	setFilePath("items.bmp");
 	aBmp = new bmpObj(&aFrame,mFilePath);
@@ -120,23 +118,19 @@ void shopList::setup(void) {
 	addObj(aBmp);
 	
 	setFilePath("back22.bmp");
-	clearCartBtn* clearBtn = new clearCartBtn(this,mFilePath);
+	clearBtn = new clearCartBtn(this,mFilePath);
 	addObj(clearBtn);
 	
 	addItem = newStdBtn(NEW_X,NEW_Y,icon22,newItemCmd,this);
 	addObj(addItem);
 	
+	editItem = newStdBtn(EDIT_X,EDIT_Y,icon22,editCmd,this);
+	editItem->setActive(false);
+	addObj(editItem);
+	
 	delItem = newStdBtn(DELETE_X,DELETE_Y,icon22,deleteItemCmd,this);
 	delItem->setActive(false);
 	addObj(delItem);
-	
-	aLabel = new label(NEW_LBL_X,NEW_LBL_Y,NEW_LBL_W,NEW_LBL_H,"Add");
-	aLabel->setColors(&white);
-	addObj(aLabel);
-	
-	aLabel = new label(DELETE_LBL_X,DELETE_LBL_Y,DELETE_LBL_W,DELETE_LBL_H,"Del");
-	aLabel->setColors(&white);
-	addObj(aLabel);
 	
 	aFrame.setRect(ITEMS_X,ITEMS_Y,ITEMS_W,ITEMS_H);
 	ourItemList = new itemList(&aFrame);
@@ -152,50 +146,66 @@ void shopList::setup(void) {
 }
 
 
-void shopList::setItemIcons(bool addActive,bool delActive) {
+void shopList::setItemIcons(bool addActive,bool editActive,bool delActive) {
 
-	addItem->setActive(addActive);
-	delItem->setActive(delActive);
+		addItem->setActive(addActive);
+		editItem->setActive(editActive);
+		delItem->setActive(delActive);
 }
 
 
 void shopList::handleCom(stdComs comID) {
 	
 	switch(comID) {
-		case newItemCmd	:
+		case newItemCmd		:
 			Serial.println("Got new item cmd!");
 			if (ourAddItemDBox) {
-				Serial.print("Add item : ");
-				Serial.println(ourAddItemDBox->getName());
 				ourItemMgr->addNewItem(ourAddItemDBox->getName());
 			} else {
 				ourAddItemDBox = new addItemDBox(this);
-				setItemIcons(false,false);
+				setItemIcons(false,false,false);
 			}
 		break;
 		case deleteItemCmd	:
 			Serial.println("Got delete item cmd!");
 			ourItemMgr->deleteItem(selectedView);
-			setItemIcons(true,false);
+			setItemIcons(true,false,false);
+		break;
+		case editCmd			:
+			Serial.println("Got edit cmd");
+			if (selectedView) {
+				ourEditItemDBox = new editItemDBox(this,selectedView->getItemName());
+				if (ourEditItemDBox) {
+					setItemIcons(false,false,false);
+				}
+			}
 		break;	
-		case okCmd 		:
+		case okCmd 				:
 			Serial.println("Got Ok cmd");
 			if (ourAddItemDBox) {
-				Serial.print("Add item : ");
-				Serial.println(ourAddItemDBox->getName());
 				ourItemMgr->addNewItem(ourAddItemDBox->getName());
+				setItemIcons(true,false,false);
 				ourAddItemDBox = NULL;
-			} else {
-				Serial.println("But no DBox to get item from!");
+			} else if (ourEditItemDBox){
+				selectedView->setItemName(ourEditItemDBox->getName());
+				ourItemMgr->saveSelected(selectedView);
+				setItemIcons(true,true,true);
+				ourAddItemDBox = NULL;
 			}
-			setItemIcons(true,false);
+			
 		break;
-		case cancelCmd	:
+		case cancelCmd			:
 			Serial.println("Got cancel cmd");
-			ourAddItemDBox = NULL;
-			setItemIcons(true,false);
+			if (ourAddItemDBox) {
+				setItemIcons(true,false,false);
+				ourAddItemDBox = NULL;
+			} else if (ourEditItemDBox){
+				setItemIcons(true,true,true);
+				ourEditItemDBox = NULL;
+			}	
+			
 		break;
-		default			:
+		default					:
 			Serial.print("Seeing comID ");
 			Serial.println((int)comID);
 			panel::handleCom(comID);
@@ -209,9 +219,9 @@ void shopList::selected(itemView* aView) {
 	
 	selectedView = aView;
 	if (selectedView) {
-		setItemIcons(true,true);
+		setItemIcons(true,true,true);
 	} else {
-		setItemIcons(true,false);
+		setItemIcons(true,false,false);
 	}
 }
 
@@ -219,16 +229,22 @@ void shopList::selected(itemView* aView) {
 void shopList::clearCart(void) { ourItemMgr->clearCart(); }
 
 
-void shopList::loop(void) {  }
+void shopList::loop(void) {
+
+	if (ourCartList->numObjects()!=numObj) {
+		numObj = ourCartList->numObjects();
+		clearBtn->setActive(numObj>0);
+	}
+}
 
 
 // The default here is to not draw ourselves. You can change that.
 void shopList::drawSelf(void) {
 
-	screen->fillScreen(&SLBackColor);
-	//screen->drawVLine(120,50,300,&cyan); 
-	//screen->drawVLine(60,50,300,&cyan);
-	//screen->drawVLine(180,50,300,&cyan);
+	colorObj	lineColor(LC_GREY);
+	
+	screen->fillScreen(&colors->dispBackColor);
+	screen->drawVLine(120,ITEM_LBL_Y+40,205,&lineColor);
 }
 
 
