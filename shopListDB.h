@@ -14,6 +14,32 @@ class frame : public drawObj {
 	virtual	void	drawSelf(void);
 };
 
+// **************************************************************
+// **********************   deleteOkAlert   **********************
+// **************************************************************
+
+
+class deleteOkAlert :	public alertObj {
+
+	public:
+				deleteOkAlert(listener* inListener);
+				~deleteOkAlert(void);			
+};
+
+
+
+// **************************************************************
+// **********************   clearOkAlert   **********************
+// **************************************************************
+
+
+class clearOkAlert :	public alertObj {
+
+	public:
+				clearOkAlert(listener* inListener);
+				~clearOkAlert(void);			
+};
+
 
 // **************************************************************
 // **********************   addItemDBox    **********************
@@ -29,7 +55,7 @@ class addItemDBox :	public alertObj,
 							public kbdUser {
 
 	public:
-				addItemDBox(listener* inListenerp);
+				addItemDBox(listener* inListener);
 				~addItemDBox(void);
 				
 				const char*	getName(void);

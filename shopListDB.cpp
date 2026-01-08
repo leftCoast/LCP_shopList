@@ -6,7 +6,8 @@
 #define ADD_ITEM_MSG		"Add huge items"
 #define ADD_NAME_MSG		""
 #define EDIT_ITEM_MSG	"Have a go at changing an item."
-
+#define CLEAR_OK_MSG		"You want the list cleared?"
+#define DELETE_OK_MSG	"You want to delete that? Just checkin'.."
 
 
 frame::frame(rect* inRect)
@@ -17,8 +18,33 @@ frame::~frame(void) {  }
 
 				
 void frame::drawSelf(void) { screen->drawRect(this,&black); }
-		
-		
+	
+	
+// **************************************************************
+// *********************   deleteOkAlert   **********************
+// **************************************************************
+
+
+deleteOkAlert::deleteOkAlert(listener* inListener)
+	: alertObj(DELETE_OK_MSG,inListener,warnAlert,true,true) {  }
+	
+	
+deleteOkAlert::~deleteOkAlert(void) {  }
+	
+
+							
+// **************************************************************
+// **********************   clearOkAlert   **********************
+// **************************************************************
+
+
+clearOkAlert::clearOkAlert(listener* inListener)
+	: alertObj(CLEAR_OK_MSG,inListener,warnAlert,true,true) {  }
+	
+	
+clearOkAlert::~clearOkAlert(void) {  }
+	
+
 					
 // **************************************************************
 // **********************   addItemDBox    **********************

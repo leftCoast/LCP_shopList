@@ -79,6 +79,8 @@ class shopList	: public panel {
 				clearCartBtn*	clearBtn;
 				addItemDBox*	ourAddItemDBox;
 				editItemDBox*	ourEditItemDBox;
+				clearOkAlert* 	checkClear;
+				deleteOkAlert*	checkDelete;
 				itemList*		ourItemList;
 				cartList*		ourCartList;
 				int				numObj;

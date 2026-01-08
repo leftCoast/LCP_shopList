@@ -34,7 +34,7 @@
 
 #define CLEAR_X		EDIT_X
 #define CLEAR_Y		ITEM_LBL_Y
-
+ 
 
 // **********************************************************************
 // clearCartBtn
@@ -50,6 +50,7 @@ clearCartBtn::clearCartBtn(shopList* inApp,const char* path)
 }
 
 clearCartBtn::~clearCartBtn(void) {  }
+	
 	
 void clearCartBtn::doAction(void) {
 
@@ -72,6 +73,8 @@ shopList::shopList(int newAppID)
   	
 	ourAddItemDBox		= NULL;
 	ourEditItemDBox	= NULL;
+	checkClear			= NULL;
+	checkDelete			= NULL;
 	ourBlockFile		= NULL;
 	ourItemMgr			= NULL;
 	selectedView		= NULL;
@@ -168,8 +171,7 @@ void shopList::handleCom(stdComs comID) {
 		break;
 		case deleteItemCmd	:
 			Serial.println("Got delete item cmd!");
-			ourItemMgr->deleteItem(selectedView);
-			setItemIcons(true,false,false);
+			checkDelete = new deleteOkAlert(this);
 		break;
 		case editCmd			:
 			Serial.println("Got edit cmd");
@@ -191,8 +193,16 @@ void shopList::handleCom(stdComs comID) {
 				ourItemMgr->saveSelected(selectedView);
 				setItemIcons(true,true,true);
 				ourAddItemDBox = NULL;
-			}
-			
+			} else if (checkClear) {
+				ourItemMgr->clearCart();
+				checkClear = NULL;
+				setFocusPtr(NULL);
+				setItemIcons(true,false,false);
+			} else if (checkDelete) {
+				checkDelete = NULL;
+				ourItemMgr->deleteItem(selectedView);
+				setItemIcons(true,false,false);
+			}	
 		break;
 		case cancelCmd			:
 			Serial.println("Got cancel cmd");
@@ -202,8 +212,13 @@ void shopList::handleCom(stdComs comID) {
 			} else if (ourEditItemDBox){
 				setItemIcons(true,true,true);
 				ourEditItemDBox = NULL;
-			}	
-			
+			} else if (checkClear) {
+				checkClear = NULL;
+				setFocusPtr(NULL);
+				setItemIcons(true,false,false);							
+			} else if (checkDelete) {
+				checkDelete = NULL;
+			}
 		break;
 		default					:
 			Serial.print("Seeing comID ");
@@ -226,7 +241,7 @@ void shopList::selected(itemView* aView) {
 }
 
 
-void shopList::clearCart(void) { ourItemMgr->clearCart(); }
+void shopList::clearCart(void) { checkClear = new clearOkAlert(this); }
 
 
 void shopList::loop(void) {
