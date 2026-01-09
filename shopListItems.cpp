@@ -1,6 +1,6 @@
 #include <shopListItems.h>
 #include <shopList.h>
-
+//#include <debug.h>
 
 
 
@@ -233,6 +233,7 @@ void itemView::doAction(event* inEvent,point* localPt) {
 	} else if (inEvent->mType==dragBegin) {
 		dragDir = dDirection(inEvent->mAngle,DRAG_TOL);
 		if (dragDir==dragUp||dragDir==dragDn) {
+			setFocusPtr(NULL);
 			scrolling = true;
 			listPt.x = localPt->x - x;
 			listPt.y = localPt->y - y;
@@ -320,13 +321,21 @@ void itemView::changeState(itemStates newState) {
 		
 	shopList*	ourApp;
 	
+	if (ourItem.state==suggested && newState!=suggested) {
+		ourItem.timesListed++;
+	}
 	ourItem.state = newState;
 	setFocusPtr(NULL);
 	addToList();
 	ourApp = (shopList*)ourPanel;
 	ourApp->ourItemMgr->saveItem(ourItemID,&ourItem);
+	ourApp->ourItemList->sortList();
+	ourApp->ourCartList->sortList();
 }
 	
+	
+int itemView::numListings(void) { return ourItem.timesListed; }
+
 
 // This will add us to the correct list according to our state value.
 void itemView::addToList(void) {
@@ -344,18 +353,52 @@ void itemView::addToList(void) {
 		case listed :
 			name->setColors(&colors->listTextColor);
 			name->setStrike(false);
-			ourApp->ourCartList->addViewObj(this);
+			ourApp->ourCartList->addObj(this);
 		break;
 		case grabbed :
 			name->setColors(&colors->strikeTextColor);
 			name->setStrike(true);
-			ourApp->ourCartList->addViewObj(this);
+			ourApp->ourCartList->addObj(this);
 		break;
 	}
-	ourApp->ourItemList->setPositions();
-	ourApp->ourItemList->setNeedRefresh();
-	ourApp->ourCartList->setPositions();
-	ourApp->ourCartList->setNeedRefresh();
+}
+
+
+bool itemView::isGreaterThan(dblLinkListObj* compObj) {
+
+	itemView* otherObj;
+	
+	otherObj = (itemView*)compObj;
+	if (compObj) {
+		if (ourState() == otherObj->ourState()) {				// If the states match..
+			return numListings() > otherObj->numListings();	// We go on the number times listed.
+		} else if (ourState()==suggested) {						// So, we have suggested and they can not..
+			return true;												// Then we are greater.
+		} else if (ourState()==listed) {							// Else we have listed and they can not..
+			return otherObj->ourState()==grabbed;				// Return true if their state is grabbed.
+		}																	//
+		return false;													// The last possible case is us listed and them suggested.
+	}
+	return false;
+}
+
+
+bool itemView::isLessThan(dblLinkListObj* compObj) {
+	
+	itemView* otherObj;
+	
+	otherObj = (itemView*)compObj;
+	if (compObj) {
+		if (ourState() == otherObj->ourState()) {				// If the states match..
+			return numListings() < otherObj->numListings();	// We go on the number times listed.
+		} else if (ourState()==suggested) {						// So, we have suggested and they can not..
+			return false;												// Then we are greater.
+		} else if (ourState()==listed) {							// Else we have listed and they can not..
+			return otherObj->ourState()==suggested;			// Return true if their state is listed.
+		}																	//
+		return true;													// The last possible case is us listed and them suggested.
+	}
+	return false;
 }
 
 
@@ -381,7 +424,8 @@ void itemView::drawSelf(void) {
 	}
 }
 
-
+	
+	
 // **********************************************************************
 // itemList
 // **********************************************************************
@@ -394,11 +438,15 @@ itemList::itemList(rect* frame)
 itemList::~itemList(void) {  }
 
 
-void itemList::drawSelf(void) {
+void itemList::sortList(void) {
 
-	screen->fillRect(this,&colors->dispBackColor);
-	//screen->drawRect(this,&colors->outlineColor);
+	listHeader.sortTail(false);
+	setPositions();
+	setNeedRefresh();
 }
+
+
+void itemList::drawSelf(void) { screen->fillRect(this,&colors->dispBackColor); }
 
 
 
@@ -414,22 +462,11 @@ cartList::cartList(rect* frame)
 cartList::~cartList(void) {  }
 
 
-// Basically a copy of the draw list one but only accepts itemView pointers.
-void cartList::addViewObj(itemView* newObj) {
-
-	if (mVertical) {
-		itemHeight = max(itemHeight,newObj->height);
-		newObj->setLocation(0,numObjects()*itemHeight);
-	} else {
-		itemWidth = max(itemWidth,newObj->width);
-		newObj->setLocation(numObjects()*itemWidth,0);
-	}
-	if (newObj->ourState()==grabbed) {
-		newObj->dblLinkListObj::linkToEnd(&listHeader);		// Put the new guy at the BOTTOM of the list.				
-	} else {																// Else just listed?
-		newObj->dblLinkListObj::linkAfter(&listHeader);   	// Put the new guy at the top of the list.
-	}
-	needRefresh = true;
+void cartList::sortList(void) {
+	
+	listHeader.sortTail(false);
+	setPositions();
+	setNeedRefresh();
 }
 
 	
@@ -447,11 +484,7 @@ void cartList::clearCart(void) {
 }
 
 
-void cartList::drawSelf(void) {
-
-	screen->fillRect(this,&colors->dispBackColor);
-	//screen->drawRect(this,&colors->outlineColor);
-}
+void cartList::drawSelf(void) { screen->fillRect(this,&colors->dispBackColor); }
 
 	
 // **********************************************************************
@@ -624,6 +657,8 @@ void itemMgr::populateLists(void) {
 				}															//
 			}																//
 		}																	//
+		cList->sortList();											// All filled. Let's get them sorted.
+		iList->sortList();											// This one too.
 	}																		//
 }
 
@@ -646,6 +681,7 @@ void itemMgr::addNewItem(const char* name) {
 					newItemView = new itemView(newID,&newItem);								// Create the new item.
 					if (newItemView) {																// Got one?
 						newItemView->addToList();													// Tell it to go add itself to a list.
+						cList->sortList();																//
 					}																						// *pop*
 				}																							// *pop*
 			}																								// *pop*
@@ -676,7 +712,11 @@ void itemMgr::deleteItem(itemView* oldView) {
 }
 
 
-void itemMgr::clearCart(void) { cList->clearCart(); }
+void itemMgr::clearCart(void) {
+
+	cList->clearCart();
+	iList->sortList();
+}
 
 
 bool itemMgr::readItem(unsigned long itemID,item* anItem) {

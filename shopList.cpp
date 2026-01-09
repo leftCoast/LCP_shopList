@@ -71,23 +71,34 @@ void clearCartBtn::doAction(void) {
 shopList::shopList(int newAppID)
   : panel(newAppID) {
   	
-	ourAddItemDBox		= NULL;
-	ourEditItemDBox	= NULL;
-	checkClear			= NULL;
-	checkDelete			= NULL;
-	ourBlockFile		= NULL;
-	ourItemMgr			= NULL;
-	selectedView		= NULL;
-	colors 				= new pallete();
-	numObj				= -1;
-	if (colors) {
-		if (setFilePath("itemFile")) {						// This name in our folder.
+  	bool	success;
+  	
+  	success				= false;									// Let's see if this all works.
+	ourAddItemDBox		= NULL;									// Auto delete.
+	ourEditItemDBox	= NULL;									// Auto delete.
+	checkClear			= NULL;									// Auto delete.
+	checkDelete			= NULL;									// Auto delete.
+	ourBlockFile		= NULL;									// We delete.
+	ourItemMgr			= NULL;									// We delete.
+	selectedView		= NULL;									// No allocation.
+	colors 				= NULL;									// We delete.
+	numObj				= -1;										// Number of cart items. Flagged to force an init.
+	colors 				= new pallete();						// All set, start with colors.
+	if (colors) {													// Got 'em?
+		if (setFilePath("itemFile")) {						// We want this name in our folder.
 			ourBlockFile = new blockFile(mFilePath);		// Have a go at creating the block file.
 			if (ourBlockFile) {									// Got the block file?
 				ourItemMgr = new itemMgr(ourBlockFile);	// Create the item manager.
-			}
-		}
-	}
+				if (ourItemMgr) {									// Got that last item?
+					success = true;								// We'll call this good.
+				}														//
+			}															//
+		}																//
+	}																	//
+	if (!success) {												// If not a success..
+		Serial.println("Allocation failure!");				// If any are listening, tell 'em.
+		close();														// Close up shop. We can't do this.
+	}																	//
 }
 
 
@@ -161,7 +172,6 @@ void shopList::handleCom(stdComs comID) {
 	
 	switch(comID) {
 		case newItemCmd		:
-			Serial.println("Got new item cmd!");
 			if (ourAddItemDBox) {
 				ourItemMgr->addNewItem(ourAddItemDBox->getName());
 			} else {
@@ -170,11 +180,9 @@ void shopList::handleCom(stdComs comID) {
 			}
 		break;
 		case deleteItemCmd	:
-			Serial.println("Got delete item cmd!");
 			checkDelete = new deleteOkAlert(this);
 		break;
 		case editCmd			:
-			Serial.println("Got edit cmd");
 			if (selectedView) {
 				ourEditItemDBox = new editItemDBox(this,selectedView->getItemName());
 				if (ourEditItemDBox) {
@@ -183,7 +191,6 @@ void shopList::handleCom(stdComs comID) {
 			}
 		break;	
 		case okCmd 				:
-			Serial.println("Got Ok cmd");
 			if (ourAddItemDBox) {
 				ourItemMgr->addNewItem(ourAddItemDBox->getName());
 				setItemIcons(true,false,false);
@@ -205,7 +212,6 @@ void shopList::handleCom(stdComs comID) {
 			}	
 		break;
 		case cancelCmd			:
-			Serial.println("Got cancel cmd");
 			if (ourAddItemDBox) {
 				setItemIcons(true,false,false);
 				ourAddItemDBox = NULL;
@@ -221,8 +227,8 @@ void shopList::handleCom(stdComs comID) {
 			}
 		break;
 		default					:
-			Serial.print("Seeing comID ");
-			Serial.println((int)comID);
+			//Serial.print("Seeing comID ");
+			//Serial.println((int)comID);
 			panel::handleCom(comID);
 		break;
 	}

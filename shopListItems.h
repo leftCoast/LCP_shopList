@@ -122,6 +122,9 @@ class itemView :	public drawGroup {
 				itemStates		ourState(void);
 				void				changeState(itemStates newState);
 				void				addToList(void);
+				int				numListings(void);
+	virtual	bool				isGreaterThan(dblLinkListObj* compObj);
+	virtual	bool				isLessThan(dblLinkListObj* compObj);
 	virtual	void				draw(void);
 	virtual	void				drawSelf(void);
 					
@@ -143,6 +146,7 @@ class itemList : public scrollingList {
 				itemList(rect* frame);
 	virtual	~itemList(void);
 	
+				void	sortList(void);
 	virtual	void	drawSelf(void);
 
 };
@@ -160,7 +164,7 @@ class cartList : public scrollingList {
 				cartList(rect* frame);
 	virtual	~cartList(void);
 	
-	virtual	void	addViewObj(itemView* newObj);
+				void	sortList(void);
 				void	clearCart(void);
 	virtual	void	drawSelf(void);
 
