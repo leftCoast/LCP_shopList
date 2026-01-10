@@ -34,7 +34,7 @@
 
 #define CLEAR_X		EDIT_X
 #define CLEAR_Y		ITEM_LBL_Y
- 
+#define LOW_CART_NUM	4				// Less than this number of cart items? Don't bother asking. 
 
 // **********************************************************************
 // clearCartBtn
@@ -199,12 +199,12 @@ void shopList::handleCom(stdComs comID) {
 				selectedView->setItemName(ourEditItemDBox->getName());
 				ourItemMgr->saveSelected(selectedView);
 				setItemIcons(true,true,true);
-				ourAddItemDBox = NULL;
+				ourEditItemDBox = NULL;
 			} else if (checkClear) {
 				ourItemMgr->clearCart();
-				checkClear = NULL;
 				setFocusPtr(NULL);
 				setItemIcons(true,false,false);
+				checkClear = NULL;
 			} else if (checkDelete) {
 				checkDelete = NULL;
 				ourItemMgr->deleteItem(selectedView);
@@ -247,7 +247,16 @@ void shopList::selected(itemView* aView) {
 }
 
 
-void shopList::clearCart(void) { checkClear = new clearOkAlert(this); }
+void shopList::clearCart(void) {
+
+	if (ourCartList->numObjects()>LOW_CART_NUM) {
+		checkClear = new clearOkAlert(this);
+	} else {
+		setFocusPtr(NULL);
+		ourItemMgr->clearCart();
+		setItemIcons(true,false,false);
+	}
+}
 
 
 void shopList::loop(void) {
