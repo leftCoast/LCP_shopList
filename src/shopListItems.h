@@ -13,8 +13,8 @@
 // **********************************************************************
 
 #define LIST_W			110	//90
-#define ITEM_H			20
-#define NUM_ITEMS		12
+#define ITEM_H			24
+#define NUM_ITEMS		10
 
 #define ITEMS_X		0	//10
 #define ITEMS_Y		ITEM_LBL_Y + 25
