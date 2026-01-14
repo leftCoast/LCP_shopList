@@ -17,20 +17,13 @@
 #define NEW_Y			0
 
 #define EDIT_X			109
-#define EDIT_Y			0
+#define EDIT_Y			NEW_Y
 
 #define DELETE_X		169
 #define DELETE_Y		NEW_Y
 
-#define NEW_LBL_X		NEW_X + 24
-#define NEW_LBL_Y		10
-#define NEW_LBL_W		80
-#define NEW_LBL_H		12
-
-#define DELETE_LBL_X	DELETE_X + 24
-#define DELETE_LBL_Y	NEW_LBL_Y
-#define DELETE_LBL_W	NEW_LBL_W
-#define DELETE_LBL_H	NEW_LBL_H
+#define README_X		218
+#define README_Y		NEW_Y
 
 #define CLEAR_X		EDIT_X
 #define CLEAR_Y		ITEM_LBL_Y
@@ -76,6 +69,7 @@ shopList::shopList(int newAppID)
   	success				= false;									// Let's see if this all works.
 	ourAddItemDBox		= NULL;									// Auto delete.
 	ourEditItemDBox	= NULL;									// Auto delete.
+	readmeBtn			= NULL;									// Auto delete.
 	checkClear			= NULL;									// Auto delete.
 	checkDelete			= NULL;									// Auto delete.
 	ourBlockFile		= NULL;									// We delete.
@@ -146,6 +140,9 @@ void shopList::setup(void) {
 	delItem->setActive(false);
 	addObj(delItem);
 	
+	readmeBtn = newStdBtn(README_X,README_Y,icon22,readmeCmd,this);
+   addObj(readmeBtn);
+   
 	aFrame.setRect(ITEMS_X,ITEMS_Y,ITEMS_W,ITEMS_H);
 	ourItemList = new itemList(&aFrame);
 	addObj(ourItemList);
@@ -160,11 +157,12 @@ void shopList::setup(void) {
 }
 
 
-void shopList::setItemIcons(bool addActive,bool editActive,bool delActive) {
+void shopList::setItemIcons(bool addActive,bool editActive,bool delActive,bool readmeActive) {
 
 		addItem->setActive(addActive);
 		editItem->setActive(editActive);
 		delItem->setActive(delActive);
+		readmeBtn->setActive(readmeActive);
 }
 
 
@@ -209,7 +207,10 @@ void shopList::handleCom(stdComs comID) {
 				checkDelete = NULL;
 				ourItemMgr->deleteItem(selectedView);
 				setItemIcons(true,false,false);
-			}	
+			} else if (ourReadmeDBox) {	
+				ourReadmeDBox = NULL;
+			 	setItemIcons(true,false,false,true);
+			}
 		break;
 		case cancelCmd			:
 			if (ourAddItemDBox) {
@@ -225,6 +226,11 @@ void shopList::handleCom(stdComs comID) {
 			} else if (checkDelete) {
 				checkDelete = NULL;
 			}
+		break;
+		case readmeCmd			:
+			setFocusPtr(NULL);
+			setItemIcons(false,false,false,false);
+			ourReadmeDBox = new readmeDBox(this);
 		break;
 		default					:
 			//Serial.print("Seeing comID ");

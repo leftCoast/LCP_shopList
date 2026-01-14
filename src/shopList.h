@@ -65,7 +65,7 @@ class shopList	: public panel {
 	virtual		~shopList(void);
 	
 	virtual	void  setup(void);												// Run once. do your setup here.
-				void	setItemIcons(bool addActive,bool editActive,bool delActive);
+				void	setItemIcons(bool addActive,bool editActive,bool delActive,bool readmeActive=true);
 	virtual	void  handleCom(stdComs comID);								// Watching commands come in.
 				void  selected(itemView* aView);								// Being tolde that this view has focus.
 				void	clearCart(void);											//
@@ -76,7 +76,9 @@ class shopList	: public panel {
 				stdComBtn*		addItem;
 				stdComBtn*		delItem;
 				stdComBtn*		editItem;
+				stdComBtn*		readmeBtn;
 				clearCartBtn*	clearBtn;
+				readmeDBox*		ourReadmeDBox;
 				addItemDBox*	ourAddItemDBox;
 				editItemDBox*	ourEditItemDBox;
 				clearOkAlert* 	checkClear;

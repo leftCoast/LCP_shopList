@@ -8,7 +8,7 @@
 #define EDIT_ITEM_MSG	"Have a go at changing an item."
 #define CLEAR_OK_MSG		"You want the list cleared?"
 #define DELETE_OK_MSG	"You want to delete that? Just checkin'.."
-
+#define README_MSG		"Add items with green +.\n\nEdit names using yellow pencil.\n\nDelete Items with red trash.\n\nSlide items to or from lists.\n\nTouch list items to show they are in the cart.\n\nEmpty cart with blue arrow."
 
 frame::frame(rect* inRect)
 	:drawObj(inRect) {  }
@@ -19,6 +19,27 @@ frame::~frame(void) {  }
 				
 void frame::drawSelf(void) { screen->drawRect(this,&black); }
 	
+// **************************************************************
+// **********************   readmeDBox   **********************
+// **************************************************************
+
+
+readmeDBox::readmeDBox(listener* inListener)
+	: alertObj("default",inListener,noteAlert,true,false) {
+	
+		int	addedY;
+		
+		addedY = height * 2;
+		height = height + addedY;
+		okBtn->y = okBtn->y + addedY;
+		theMsg->height = theMsg->height + addedY;
+		theMsg->setText(README_MSG);
+		theMsg->calculate();
+	}
+	
+	
+readmeDBox::~readmeDBox(void) {  }		
+
 	
 // **************************************************************
 // *********************   deleteOkAlert   **********************
