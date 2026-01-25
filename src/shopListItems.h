@@ -42,9 +42,9 @@ enum	itemStates {
 
 
 struct item {
-	int				version;
+	uint32_t			version;
 	char				itemName[MAX_NAME_BYTES];
-	int				timesListed;
+	uint16_t			timesListed;
 	itemStates		state;	
 };
 
