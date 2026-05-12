@@ -12,12 +12,12 @@
 // Definitions.
 // **********************************************************************
 
-#define LIST_W			110	//90
+#define LIST_W			140	//110	//90
 #define ITEM_H			24
-#define NUM_ITEMS		10
+#define NUM_ITEMS		16		//10
 
 #define ITEMS_X		0	//10
-#define ITEMS_Y		ITEM_LBL_Y + 25
+#define ITEMS_Y		ITEM_LBL_Y + 35 //25
 #define ITEMS_W		LIST_W				// See shopListItems.h
 #define ITEMS_H		ITEM_H * NUM_ITEMS
 

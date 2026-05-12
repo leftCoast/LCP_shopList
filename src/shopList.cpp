@@ -3,31 +3,34 @@
 #include <editLabel.h>
 #include <resizeBuff.h>
 
-#define ITEM_LBL_X	40
+
+#define ITEM_LBL_X	60		//40
 #define ITEM_LBL_Y	40
 #define ITEM_LBL_W	40
 #define ITEM_LBL_H	20
 
-#define CART_LBL_X	160
+#define CART_LBL_X	220	//160
 #define CART_LBL_Y	ITEM_LBL_Y
 #define CART_LBL_W	40
 #define CART_LBL_H	20
 
-#define NEW_X			49
+#define NEW_X			80 - 11	//49
 #define NEW_Y			0
 
-#define EDIT_X			109
+#define EDIT_X			160-11		// 109
 #define EDIT_Y			NEW_Y
 
-#define DELETE_X		169
+#define DELETE_X		240-11
 #define DELETE_Y		NEW_Y
 
-#define README_X		218
+#define README_X		320-22		//218
 #define README_Y		NEW_Y
 
 #define CLEAR_X		EDIT_X
 #define CLEAR_Y		ITEM_LBL_Y
 #define LOW_CART_NUM	4				// Less than this number of cart items? Don't bother asking. 
+
+
 
 // **********************************************************************
 // clearCartBtn
@@ -280,7 +283,7 @@ void shopList::drawSelf(void) {
 	colorObj	lineColor(LC_GREY);
 	
 	screen->fillScreen(&colors->dispBackColor);
-	screen->drawVLine(120,ITEM_LBL_Y+40,205,&lineColor);
+	screen->drawVLine(160,ITEM_LBL_Y+40,340,&lineColor);
 }
 
 
