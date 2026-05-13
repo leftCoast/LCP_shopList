@@ -131,6 +131,7 @@ class itemView :	public drawGroup {
 				unsigned long	ourItemID;
 				item				ourItem;
 				STLabel*			name;
+				//STLabel*			num;
 				bool				scrolling;
 };
 

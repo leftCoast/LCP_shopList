@@ -211,13 +211,15 @@ void itemView::setupView(void) {
 	
 	if (ourItem.version) {																			// Sanity. Non zero
 		name = new STLabel(IV_NAME_X,IV_NAME_Y,IV_NAME_W,IV_NAME_H,ourItem.itemName);
-		name->setColors(&colors->listTextColor);
-		name->setTextSize(1);
-		name->setJustify(TEXT_LEFT);
-		addObj(name);
+		if (name) {
+			name->setColors(&colors->listTextColor);
+			name->setTextSize(1);
+			name->setJustify(TEXT_LEFT);
+			addObj(name);
+		}
 	}
 }
-	
+
 
 void itemView::doAction(event* inEvent,point* localPt) {
 
