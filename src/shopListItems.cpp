@@ -111,7 +111,7 @@ void STLabel::drawSelf(void) {
 		return;																			// And bolt!
 	}																						// really bad design. Tn hurry.
 	if (buff) {																			// Sanity. If we have anything to display..
-		temp = NULL;
+		temp = NULL;																	// Do the default pointer thing..
 		numCharsDisp = getViewChars();											// Save off how many chars we can display.
 		if (transp) {																	// If we don't draw background bits..
 			screen->setTextColor(&textColor);									// We just set the one color as a flag for this.
