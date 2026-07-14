@@ -176,7 +176,7 @@ void shopList::handleCom(stdComs comID) {
 			if (ourAddItemDBox) {
 				ourItemMgr->addNewItem(ourAddItemDBox->getName());
 			} else {
-				ourAddItemDBox = new addItemDBox(this);
+				ourAddItemDBox = new addItemDBox(this,sType320x480);
 				setItemIcons(false,false,false);
 			}
 		break;

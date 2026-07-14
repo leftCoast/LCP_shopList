@@ -77,7 +77,7 @@ class addItemDBox :	public alertObj,
 							public kbdUser {
 
 	public:
-				addItemDBox(listener* inListener);
+				addItemDBox(listener* inListener,screenTypes inType=sType240x320);
 				~addItemDBox(void);
 				
 				const char*	getName(void);

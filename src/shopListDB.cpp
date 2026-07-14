@@ -3,7 +3,7 @@
 //#include <debug.h>
 
 
-#define ADD_ITEM_MSG		"Add huge items"
+#define ADD_ITEM_MSG		"Add a new item!"
 #define ADD_NAME_MSG		""
 #define EDIT_ITEM_MSG	"Have a go at changing an item."
 #define CLEAR_OK_MSG		"You want the list cleared?"
@@ -72,9 +72,9 @@ clearOkAlert::~clearOkAlert(void) {  }
 // **************************************************************
 	
 						
-addItemDBox::addItemDBox(listener* inListener)
+addItemDBox::addItemDBox(listener* inListener,screenTypes inType)
 	: alertObj(ADD_ITEM_MSG,inListener,noteAlert,false,false),
-	kbdUser(this) {
+	kbdUser(this,inType) {
 	
 	rect	editRect;
 	
