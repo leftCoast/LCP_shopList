@@ -185,7 +185,7 @@ void shopList::handleCom(stdComs comID) {
 		break;
 		case editCmd			:
 			if (selectedView) {
-				ourEditItemDBox = new editItemDBox(this,selectedView->getItemName());
+				ourEditItemDBox = new editItemDBox(this,selectedView->getItemName(),sType320x480);
 				if (ourEditItemDBox) {
 					setItemIcons(false,false,false);
 				}

@@ -99,7 +99,7 @@ class editItemDBox :	public alertObj,
 							public kbdUser {
 
 	public:
-				editItemDBox(listener* inListener,const char* inName=NULL);
+				editItemDBox(listener* inListener,const char* inName=NULL,screenTypes inType=sType240x320);
 				~editItemDBox(void);
 				
 				const char*	getName(void);

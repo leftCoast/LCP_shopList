@@ -78,9 +78,9 @@ addItemDBox::addItemDBox(listener* inListener,screenTypes inType)
 	
 	rect	editRect;
 	
-	theMsg->x += 4;															// Kick the default message over a bit.
 	y += 50;																		// Move our alertBox down a bit.
-	editRect.setRect(52,40,75,10);										// Setup location for the edit box.
+	theMsg->x += 4;															// Kick the default message over a bit.
+	editRect.setRect(52,40,75,10);										// Setup location for the edit box.																				//
 	nameField = new editLabel(&editRect,ADD_NAME_MSG);				// Create it.
 	nameField->setColors(&black,&white);								// Set colors
 	setEditField(nameField);												// We also manage the keyboard. So, edit this.
@@ -127,9 +127,9 @@ void addItemDBox::idle(void) {
 // **************************************************************
 
 						
-editItemDBox::editItemDBox(listener* inListener,const char* inName)
+editItemDBox::editItemDBox(listener* inListener,const char* inName,screenTypes inType)
 	: alertObj(EDIT_ITEM_MSG,inListener,noteAlert,false,false),
-	kbdUser(this) {
+	kbdUser(this,inType) {
 	
 	rect	editRect;
 	
