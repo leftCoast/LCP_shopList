@@ -405,7 +405,7 @@ bool itemView::isLessThan(dblLinkListObj* compObj) {
 
 
 // We don't want to draw stuff where it ain't wanted.
-void itemView::itemView::draw(void) {
+void itemView::draw(void) {
 
 	if (calcualteOurList()->isVisible(this)) {
 		drawGroup::draw();
