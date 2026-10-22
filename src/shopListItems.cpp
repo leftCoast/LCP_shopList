@@ -1,7 +1,9 @@
+#include <strTools.h>
 #include <shopListItems.h>
 #include <shopList.h>
 //#include <debug.h>
 
+bool	alpha = false;	// Sadly we're going to do this as a global..
 
 
 // **********************************************************************
@@ -368,12 +370,24 @@ void itemView::addToList(void) {
 
 bool itemView::isGreaterThan(dblLinkListObj* compObj) {
 
-	itemView* otherObj;
+	itemView*	otherObj;
+	char			ourName[MAX_NAME_BYTES];
+	char			theirName[MAX_NAME_BYTES];
+	int			result;
 	
-	otherObj = (itemView*)compObj;
 	if (compObj) {
+		otherObj = (itemView*)compObj;
 		if (ourState() == otherObj->ourState()) {				// If the states match..
-			return numListings() > otherObj->numListings();	// We go on the number times listed.
+			if (alpha) {												// If we're doing alpha sorting..
+				strcpy(ourName,name->getTextBuff());
+				strcpy(theirName,otherObj->name->getTextBuff());
+				upCase(ourName);
+				upCase(theirName);										// If we're doing alpha sorting..
+				result = strcmp(ourName,theirName);
+				return(result<=0);
+			} else {
+				return numListings() > otherObj->numListings();	// We go on the number times listed.
+			}
 		} else if (ourState()==suggested) {						// So, we have suggested and they can not..
 			return true;												// Then we are greater.
 		} else if (ourState()==listed) {							// Else we have listed and they can not..
@@ -387,12 +401,25 @@ bool itemView::isGreaterThan(dblLinkListObj* compObj) {
 
 bool itemView::isLessThan(dblLinkListObj* compObj) {
 	
-	itemView* otherObj;
-	
-	otherObj = (itemView*)compObj;
+	itemView*	otherObj;
+	char			ourName[MAX_NAME_BYTES];
+	char			theirName[MAX_NAME_BYTES];
+	int			result;
+		
 	if (compObj) {
+		otherObj = (itemView*)compObj;
 		if (ourState() == otherObj->ourState()) {				// If the states match..
-			return numListings() < otherObj->numListings();	// We go on the number times listed.
+			if (alpha) {
+				strcpy(ourName,name->getTextBuff());
+				strcpy(theirName,otherObj->name->getTextBuff());
+				upCase(ourName);
+				upCase(theirName);										// If we're doing alpha sorting..
+				result = strcmp(ourName,theirName);
+				return(result>0);
+			} else {
+				return numListings() < otherObj->numListings();	// We go on the number times listed.
+			}
+			
 		} else if (ourState()==suggested) {						// So, we have suggested and they can not..
 			return false;												// Then we are greater.
 		} else if (ourState()==listed) {							// Else we have listed and they can not..
@@ -434,7 +461,7 @@ void itemView::drawSelf(void) {
 
 
 itemList::itemList(rect* frame)
-	: scrollingList(frame->x,frame->y,frame->width,frame->height,touchScroll,dragEvents) {  }
+	: scrollingList(frame->x,frame->y,frame->width,frame->height,touchScroll,dragEvents) { }
 
 	
 itemList::~itemList(void) {  }
@@ -629,7 +656,11 @@ bool IDList::removeItem(unsigned long oldID) {
 
 
 itemMgr::itemMgr(blockFile* aBlockFile)
-	: IDList(aBlockFile) { ourBlockFile = aBlockFile; }
+	: IDList(aBlockFile) {
+	
+	ourBlockFile	= aBlockFile;	// Here's our file O' goodies.
+	alpha				= false;			// Sort by # not by alphabet.
+}
 	
 	
 itemMgr::~itemMgr(void) { }
@@ -714,6 +745,13 @@ void itemMgr::deleteItem(itemView* oldView) {
 }
 
 
+void itemMgr::toggleAlpha(void) {
+
+	alpha = !alpha;
+	iList->sortList();
+}
+
+
 void itemMgr::clearCart(void) {
 
 	cList->clearCart();
@@ -742,8 +780,6 @@ void itemMgr::saveSelected(itemView* selected) {
 		saveItem(selected->ourItemID,&(selected->ourItem));
 	}
 }
-		
-
 
 
 

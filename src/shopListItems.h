@@ -14,7 +14,7 @@
 
 #define LIST_W			140	//110	//90
 #define ITEM_H			24
-#define NUM_ITEMS		16		//10
+#define NUM_ITEMS		15		//10
 
 #define ITEMS_X		0	//10
 #define ITEMS_Y		ITEM_LBL_Y + 35 //25
@@ -47,6 +47,9 @@ struct item {
 	uint16_t			timesListed;
 	itemStates		state;	
 };
+
+
+//bool	alpha;
 
 
 // **********************************************************************
@@ -131,7 +134,6 @@ class itemView :	public drawGroup {
 				unsigned long	ourItemID;
 				item				ourItem;
 				STLabel*			name;
-				//STLabel*			num;
 				bool				scrolling;
 };
 
@@ -149,7 +151,7 @@ class itemList : public scrollingList {
 	
 				void	sortList(void);
 	virtual	void	drawSelf(void);
-
+	
 };
 
 
@@ -168,7 +170,6 @@ class cartList : public scrollingList {
 				void	sortList(void);
 				void	clearCart(void);
 	virtual	void	drawSelf(void);
-
 };
 
 
@@ -209,6 +210,7 @@ class itemMgr :	public IDList {
 				void	populateLists(void);
 				void	addNewItem(const char* name);
 				void	deleteItem(itemView* oldView);
+				void	toggleAlpha(void);
 				void	clearCart(void);
 				void	saveItem(unsigned long itemID,item* anItem);
 				void	saveSelected(itemView* selected);

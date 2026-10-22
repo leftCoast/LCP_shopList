@@ -35,6 +35,7 @@
 
 class shopList;
 
+
 // **********************************************************************
 // clearCartBtn
 // **********************************************************************
@@ -77,6 +78,7 @@ class shopList	: public panel {
 				stdComBtn*		delItem;
 				stdComBtn*		editItem;
 				stdComBtn*		readmeBtn;
+				stdComBtn*		sortBtn;
 				clearCartBtn*	clearBtn;
 				readmeDBox*		ourReadmeDBox;
 				addItemDBox*	ourAddItemDBox;

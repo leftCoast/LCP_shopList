@@ -85,7 +85,6 @@ class addItemDBox :	public alertObj,
 	virtual	void			idle(void);
 			
 				editLabel*	nameField;
-				//stdComBtn*	addAnother;	
 };
 
 

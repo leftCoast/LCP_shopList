@@ -26,6 +26,9 @@
 #define README_X		320-22		//218
 #define README_Y		NEW_Y
 
+#define SORT_X			0	// EDIT_X
+#define SORT_Y			ITEM_LBL_Y
+
 #define CLEAR_X		EDIT_X
 #define CLEAR_Y		ITEM_LBL_Y
 #define LOW_CART_NUM	4				// Less than this number of cart items? Don't bother asking. 
@@ -35,7 +38,6 @@
 // **********************************************************************
 // clearCartBtn
 // **********************************************************************
-
 
 
 clearCartBtn::clearCartBtn(shopList* inApp,const char* path)
@@ -53,7 +55,6 @@ void clearCartBtn::doAction(void) {
 	OSPtr->beep();
 	if (ourApp) ourApp->clearCart();
 }
-
 
 
 
@@ -128,6 +129,9 @@ void shopList::setup(void) {
 	aBmp = new bmpObj(&aFrame,mFilePath);
 	addObj(aBmp);
 	
+	sortBtn = newStdBtn(SORT_X,SORT_Y,icon22,sortCmd,this);
+	addObj(sortBtn);
+	
 	setFilePath("back22.bmp");
 	clearBtn = new clearCartBtn(this,mFilePath);
 	addObj(clearBtn);
@@ -172,6 +176,9 @@ void shopList::setItemIcons(bool addActive,bool editActive,bool delActive,bool r
 void shopList::handleCom(stdComs comID) {
 	
 	switch(comID) {
+		case sortCmd		:
+			ourItemMgr->toggleAlpha();
+		break;
 		case newItemCmd		:
 			if (ourAddItemDBox) {
 				ourItemMgr->addNewItem(ourAddItemDBox->getName());
